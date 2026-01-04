@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ChatGPT Clone</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4f6f9;
+            --bg-secondary: #eef1f6;
+            --panel: #ffffff;
+            --ink: #0b1220;
+            --muted: #5d6b82;
+            --accent: #2463eb;
+            --accent-strong: #1b4fd1;
+            --accent-soft: rgba(36, 99, 235, 0.12);
+            --success: #0f8a5f;
+            --danger: #c0392b;
+            --line: rgba(15, 23, 42, 0.08);
+            --shadow: 0 25px 60px rgba(15, 23, 42, 0.12);
+            --radius: 18px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at top, #ffffff 0%, #f4f6f9 50%, #e9edf5 100%);
+            color: var(--ink);
+            font-family: "DM Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            width: 420px;
+            height: 420px;
+            background: linear-gradient(135deg, rgba(36, 99, 235, 0.22), rgba(15, 138, 95, 0.14));
+            filter: blur(0);
+            opacity: 0.55;
+            border-radius: 40%;
+            z-index: -1;
+        }
+
+        body::before {
+            top: -180px;
+            right: -140px;
+        }
+
+        body::after {
+            bottom: -200px;
+            left: -140px;
+        }
+
+        .app {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 24px 40px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #1b4fd1 0%, #0f8a5f 100%);
+            display: grid;
+            place-items: center;
+            color: #ffffff;
+            font-family: "Space Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            box-shadow: 0 12px 30px rgba(27, 79, 209, 0.3);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-family: "Space Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 1.4rem;
+        }
+
+        .brand p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            border: 1px solid var(--line);
+            background: var(--panel);
+            color: var(--ink);
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            border-color: rgba(36, 99, 235, 0.3);
+            box-shadow: 0 10px 20px rgba(36, 99, 235, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn.primary {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 16px 32px rgba(36, 99, 235, 0.25);
+        }
+
+        .chat-shell {
+            flex: 1;
+            background: var(--panel);
+            border-radius: var(--radius);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 420px;
+        }
+
+        .messages {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+            padding-right: 8px;
+            min-height: 240px;
+        }
+
+        .message {
+            max-width: 78%;
+            border-radius: 16px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .message .label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--accent);
+            color: #ffffff;
+            box-shadow: 0 14px 28px rgba(36, 99, 235, 0.2);
+        }
+
+        .message.user .label {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: #f3f6fb;
+            color: var(--ink);
+            border: 1px solid rgba(36, 99, 235, 0.12);
+        }
+
+        .message.error {
+            align-self: flex-start;
+            background: rgba(192, 57, 43, 0.08);
+            border: 1px solid rgba(192, 57, 43, 0.3);
+            color: #8f2c22;
+        }
+
+        .empty-state {
+            border: 1px dashed rgba(15, 23, 42, 0.2);
+            border-radius: 16px;
+            padding: 22px;
+            background: var(--bg-secondary);
+            color: var(--muted);
+            text-align: left;
+        }
+
+        .empty-state h3 {
+            margin: 0 0 8px;
+            font-family: "Space Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: var(--ink);
+        }
+
+        .composer {
+            position: sticky;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: var(--radius);
+            border: 1px solid var(--line);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+            backdrop-filter: blur(8px);
+        }
+
+        .demo-banner {
+            background: var(--accent-soft);
+            border: 1px solid rgba(36, 99, 235, 0.25);
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            color: #1b4fd1;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        textarea {
+            flex: 1;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: none;
+            min-height: 56px;
+            max-height: 160px;
+            background: #ffffff;
+            color: var(--ink);
+            box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+        }
+
+        textarea:focus {
+            outline: 2px solid rgba(36, 99, 235, 0.2);
+            border-color: rgba(36, 99, 235, 0.5);
+        }
+
+        .hint {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(36, 99, 235, 0.2);
+            border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+
+        .toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: var(--panel);
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            padding: 12px 14px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            max-width: 340px;
+            z-index: 10;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .toast a {
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .toast.error {
+            border-color: rgba(192, 57, 43, 0.4);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 720px) {
+            .app {
+                padding: 20px 16px 28px;
+            }
+
+            .actions {
+                width: 100%;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .chat-shell {
+                min-height: 360px;
+            }
+
+            .message {
+                max-width: 100%;
+            }
+
+            .input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                color-scheme: dark;
+                --bg: #0b1220;
+                --bg-secondary: rgba(255, 255, 255, 0.06);
+                --panel: rgba(14, 19, 33, 0.92);
+                --ink: #e6ecf8;
+                --muted: #9aa4b8;
+                --line: rgba(255, 255, 255, 0.08);
+                --shadow: 0 25px 60px rgba(2, 6, 23, 0.45);
+            }
+
+            body {
+                background: radial-gradient(circle at top, #1b2233 0%, #0b1220 55%, #070b14 100%);
+            }
+
+            .message.assistant {
+                background: rgba(255, 255, 255, 0.06);
+            }
+
+            textarea {
+                background: rgba(255, 255, 255, 0.04);
+                color: var(--ink);
+            }
+
+            .composer {
+                background: rgba(11, 18, 32, 0.9);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="topbar">
+            <div class="brand">
+                <div class="logo">AI</div>
+                <div>
+                    <h1>ChatGPT Clone</h1>
+                    <p>Portfolio-ready demo with guardrails and a focused UX.</p>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="btn" id="copyBtn" disabled>Copy last answer</button>
+                <button class="btn" id="clearBtn">Clear chat</button>
+            </div>
+        </header>
+
+        <section class="chat-shell">
+            <div class="messages" id="messages">
+                <div class="empty-state" id="emptyState">
+                    <h3>Start a focused conversation</h3>
+                    <div>Ask about a product spec, debug a snippet, or get a plan.</div>
+                    <div style="margin-top: 10px;">
+                        Example: Draft a clean API error handling pattern for Flask.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="composer">
+            <div class="demo-banner">
+                Public demo (limited): 5 requests/day per IP - 50/day total - To run unlimited, clone the repo and use your own API key.
+            </div>
+            <div class="input-row">
+                <textarea id="userInput" placeholder="Type your message here..."></textarea>
+                <button class="btn primary" id="sendBtn">Send</button>
+            </div>
+            <div class="hint">Enter to send. Shift+Enter for a new line.</div>
+        </footer>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">
+        <span id="toastMessage"></span>
+        <a id="toastAction" href="README.md#demo" style="display: none;">Run locally</a>
+    </div>
+
+    <script>
+        const messagesEl = document.getElementById("messages");
+        const emptyStateEl = document.getElementById("emptyState");
+        const inputEl = document.getElementById("userInput");
+        const sendBtn = document.getElementById("sendBtn");
+        const clearBtn = document.getElementById("clearBtn");
+        const copyBtn = document.getElementById("copyBtn");
+        const toastEl = document.getElementById("toast");
+        const toastMessageEl = document.getElementById("toastMessage");
+        const toastActionEl = document.getElementById("toastAction");
+
+        let lastAnswer = "";
+        let toastTimer = null;
+
+        function updateEmptyState() {
+            const hasMessages = messagesEl.querySelectorAll(".message").length > 0;
+            emptyStateEl.style.display = hasMessages ? "none" : "block";
+        }
+
+        function scrollToBottom() {
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function createMessage(role, content) {
+            const wrapper = document.createElement("div");
+            wrapper.className = `message ${role}`;
+
+            const label = document.createElement("div");
+            label.className = "label";
+            label.textContent = role === "user" ? "You" : role === "assistant" ? "Assistant" : "System";
+
+            const body = document.createElement("div");
+            body.textContent = content;
+
+            wrapper.appendChild(label);
+            wrapper.appendChild(body);
+            messagesEl.appendChild(wrapper);
+
+            updateEmptyState();
+            scrollToBottom();
+            return wrapper;
+        }
+
+        function createLoadingMessage() {
+            const wrapper = document.createElement("div");
+            wrapper.className = "message assistant";
+            const label = document.createElement("div");
+            label.className = "label";
+            label.textContent = "Assistant";
+            const body = document.createElement("div");
+            const spinner = document.createElement("div");
+            spinner.className = "spinner";
+            body.appendChild(spinner);
+            wrapper.appendChild(label);
+            wrapper.appendChild(body);
+            messagesEl.appendChild(wrapper);
+            updateEmptyState();
+            scrollToBottom();
+            return wrapper;
+        }
+
+        function showToast(message, type, showAction) {
+            toastMessageEl.textContent = message;
+            toastActionEl.style.display = showAction ? "inline-flex" : "none";
+            toastEl.classList.remove("error");
+            if (type === "error") {
+                toastEl.classList.add("error");
+            }
+            toastEl.classList.add("show");
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toastEl.classList.remove("show");
+            }, 4800);
+        }
+
+        function setLoading(isLoading) {
+            sendBtn.disabled = isLoading;
+            sendBtn.textContent = isLoading ? "Sending..." : "Send";
+        }
+
+        async function sendMessage() {
+            const text = inputEl.value.trim();
+            if (!text) {
+                showToast("Please enter a message.", "error", false);
+                return;
+            }
+
+            createMessage("user", text);
+            inputEl.value = "";
+            inputEl.style.height = "auto";
+            setLoading(true);
+
+            const loadingMessage = createLoadingMessage();
+
+            try {
+                const response = await fetch(`/get?msg=${encodeURIComponent(text)}`);
+                const data = await response.text();
+                if (!response.ok) {
+                    const error = new Error(data || "Request failed.");
+                    error.status = response.status;
+                    error.retryAfter = response.headers.get("Retry-After");
+                    throw error;
+                }
+                loadingMessage.remove();
+                createMessage("assistant", data);
+                lastAnswer = data;
+                copyBtn.disabled = false;
+            } catch (error) {
+                loadingMessage.remove();
+                const message = error.status === 429
+                    ? "Public demo limit reached. Please try again later or run locally."
+                    : "Something went wrong. Please try again.";
+                createMessage("error", message);
+                showToast(message, "error", error.status === 429);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        inputEl.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        inputEl.addEventListener("input", () => {
+            inputEl.style.height = "auto";
+            inputEl.style.height = `${inputEl.scrollHeight}px`;
+        });
+
+        sendBtn.addEventListener("click", sendMessage);
+
+        clearBtn.addEventListener("click", async () => {
+            messagesEl.querySelectorAll(".message").forEach((el) => el.remove());
+            updateEmptyState();
+            lastAnswer = "";
+            copyBtn.disabled = true;
+            try {
+                await fetch("/clear", { method: "POST" });
+            } catch (error) {
+                showToast("Unable to clear server state.", "error", false);
+            }
+        });
+
+        copyBtn.addEventListener("click", async () => {
+            if (!lastAnswer) {
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(lastAnswer);
+                showToast("Copied to clipboard.", "success", false);
+            } catch (error) {
+                showToast("Copy failed. Please try again.", "error", false);
+            }
+        });
+
+        updateEmptyState();
+    </script>
+</body>
+</html>
