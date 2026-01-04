@@ -115,6 +115,28 @@
             gap: 10px;
         }
 
+        .lang-toggle {
+            display: inline-flex;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            overflow: hidden;
+            background: var(--panel);
+        }
+
+        .lang-toggle button {
+            border: none;
+            background: transparent;
+            padding: 8px 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--muted);
+        }
+
+        .lang-toggle button.active {
+            background: var(--accent);
+            color: #ffffff;
+        }
+
         .btn {
             border: 1px solid var(--line);
             background: var(--panel);
@@ -406,37 +428,41 @@
             <div class="brand">
                 <div class="logo">AI</div>
                 <div>
-                    <h1>ChatGPT Clone</h1>
-                    <p>Portfolio-ready demo with guardrails and a focused UX.</p>
+                    <h1 id="title">ChatGPT Clone</h1>
+                    <p id="subtitle">Demo lista para portafolio con límites y UX cuidada.</p>
                 </div>
             </div>
             <div class="actions">
-                <button class="btn" id="copyBtn" disabled>Copy last answer</button>
-                <button class="btn" id="clearBtn">Clear chat</button>
+                <div class="lang-toggle" aria-label="Language">
+                    <button type="button" id="langEs" class="active">ES</button>
+                    <button type="button" id="langEn">EN</button>
+                </div>
+                <button class="btn" id="copyBtn" disabled>Copiar última respuesta</button>
+                <button class="btn" id="clearBtn">Borrar chat</button>
             </div>
         </header>
 
         <section class="chat-shell">
             <div class="messages" id="messages">
                 <div class="empty-state" id="emptyState">
-                    <h3>Start a focused conversation</h3>
-                    <div>Ask about a product spec, debug a snippet, or get a plan.</div>
-                    <div style="margin-top: 10px;">
-                        Example: Draft a clean API error handling pattern for Flask.
+                    <h3 id="emptyTitle">¿En qué puedo ayudarte?</h3>
+                    <div id="emptyBody">Puedes pedir ayuda con ideas, código, resúmenes o planes de acción.</div>
+                    <div id="emptyExample" style="margin-top: 10px;">
+                        Ejemplo: Redacta un plan de pruebas para una API en Flask.
                     </div>
                 </div>
             </div>
         </section>
 
         <footer class="composer">
-            <div class="demo-banner">
-                Public demo (limited): 5 requests/day per IP - 50/day total - To run unlimited, clone the repo and use your own API key.
+            <div class="demo-banner" id="demoBanner">
+                Demo pública (limitada): 5 requests/día por IP - 50/día total - Para uso ilimitado, clona el repo y usa tu propia API key.
             </div>
             <div class="input-row">
-                <textarea id="userInput" placeholder="Type your message here..."></textarea>
-                <button class="btn primary" id="sendBtn">Send</button>
+                <textarea id="userInput" placeholder="Escribe tu mensaje..."></textarea>
+                <button class="btn primary" id="sendBtn">Enviar</button>
             </div>
-            <div class="hint">Enter to send. Shift+Enter for a new line.</div>
+            <div class="hint" id="hint">Enter para enviar. Shift+Enter para nueva línea.</div>
         </footer>
     </div>
 
@@ -456,8 +482,87 @@
         const toastMessageEl = document.getElementById("toastMessage");
         const toastActionEl = document.getElementById("toastAction");
 
+        const langEsBtn = document.getElementById("langEs");
+        const langEnBtn = document.getElementById("langEn");
+        const titleEl = document.getElementById("title");
+        const subtitleEl = document.getElementById("subtitle");
+        const emptyTitleEl = document.getElementById("emptyTitle");
+        const emptyBodyEl = document.getElementById("emptyBody");
+        const emptyExampleEl = document.getElementById("emptyExample");
+        const demoBannerEl = document.getElementById("demoBanner");
+        const hintEl = document.getElementById("hint");
+
+        const i18n = {
+            es: {
+                title: "ChatGPT Clone",
+                subtitle: "Demo lista para portafolio con límites y UX cuidada.",
+                emptyTitle: "¿En qué puedo ayudarte?",
+                emptyBody: "Puedes pedir ayuda con ideas, código, resúmenes o planes de acción.",
+                emptyExample: "Ejemplo: Redacta un plan de pruebas para una API en Flask.",
+                demoBanner: "Demo pública (limitada): 5 requests/día por IP - 50/día total - Para uso ilimitado, clona el repo y usa tu propia API key.",
+                placeholder: "Escribe tu mensaje...",
+                send: "Enviar",
+                sending: "Enviando...",
+                copy: "Copiar última respuesta",
+                clear: "Borrar chat",
+                hint: "Enter para enviar. Shift+Enter para nueva línea.",
+                you: "Tú",
+                assistant: "Asistente",
+                system: "Sistema",
+                emptyMessage: "Escribe un mensaje antes de enviar.",
+                errorGeneric: "Algo salió mal. Intenta de nuevo.",
+                limitMessage: "Límite de demo alcanzado. Intenta más tarde o ejecútalo local.",
+                copySuccess: "Copiado al portapapeles.",
+                copyFail: "No se pudo copiar. Intenta de nuevo.",
+                clearFail: "No se pudo borrar el estado del servidor.",
+            },
+            en: {
+                title: "ChatGPT Clone",
+                subtitle: "Portfolio-ready demo with guardrails and a focused UX.",
+                emptyTitle: "How can I help?",
+                emptyBody: "Ask for ideas, code, summaries, or action plans.",
+                emptyExample: "Example: Draft a testing plan for a Flask API.",
+                demoBanner: "Public demo (limited): 5 requests/day per IP - 50/day total - To run unlimited, clone the repo and use your own API key.",
+                placeholder: "Type your message...",
+                send: "Send",
+                sending: "Sending...",
+                copy: "Copy last answer",
+                clear: "Clear chat",
+                hint: "Enter to send. Shift+Enter for a new line.",
+                you: "You",
+                assistant: "Assistant",
+                system: "System",
+                emptyMessage: "Please enter a message.",
+                errorGeneric: "Something went wrong. Please try again.",
+                limitMessage: "Public demo limit reached. Please try again later or run locally.",
+                copySuccess: "Copied to clipboard.",
+                copyFail: "Copy failed. Please try again.",
+                clearFail: "Unable to clear server state.",
+            }
+        };
+
+        let currentLang = "es";
+
         let lastAnswer = "";
         let toastTimer = null;
+
+        function applyLanguage(lang) {
+            const t = i18n[lang];
+            currentLang = lang;
+            titleEl.textContent = t.title;
+            subtitleEl.textContent = t.subtitle;
+            emptyTitleEl.textContent = t.emptyTitle;
+            emptyBodyEl.textContent = t.emptyBody;
+            emptyExampleEl.textContent = t.emptyExample;
+            demoBannerEl.textContent = t.demoBanner;
+            inputEl.placeholder = t.placeholder;
+            sendBtn.textContent = t.send;
+            copyBtn.textContent = t.copy;
+            clearBtn.textContent = t.clear;
+            hintEl.textContent = t.hint;
+            langEsBtn.classList.toggle("active", lang === "es");
+            langEnBtn.classList.toggle("active", lang === "en");
+        }
 
         function updateEmptyState() {
             const hasMessages = messagesEl.querySelectorAll(".message").length > 0;
@@ -474,7 +579,8 @@
 
             const label = document.createElement("div");
             label.className = "label";
-            label.textContent = role === "user" ? "You" : role === "assistant" ? "Assistant" : "System";
+            const labels = i18n[currentLang];
+            label.textContent = role === "user" ? labels.you : role === "assistant" ? labels.assistant : labels.system;
 
             const body = document.createElement("div");
             body.textContent = content;
@@ -522,13 +628,13 @@
 
         function setLoading(isLoading) {
             sendBtn.disabled = isLoading;
-            sendBtn.textContent = isLoading ? "Sending..." : "Send";
+            sendBtn.textContent = isLoading ? i18n[currentLang].sending : i18n[currentLang].send;
         }
 
         async function sendMessage() {
             const text = inputEl.value.trim();
             if (!text) {
-                showToast("Please enter a message.", "error", false);
+                showToast(i18n[currentLang].emptyMessage, "error", false);
                 return;
             }
 
@@ -555,8 +661,8 @@
             } catch (error) {
                 loadingMessage.remove();
                 const message = error.status === 429
-                    ? "Public demo limit reached. Please try again later or run locally."
-                    : "Something went wrong. Please try again.";
+                    ? i18n[currentLang].limitMessage
+                    : i18n[currentLang].errorGeneric;
                 createMessage("error", message);
                 showToast(message, "error", error.status === 429);
             } finally {
@@ -586,7 +692,7 @@
             try {
                 await fetch("/clear", { method: "POST" });
             } catch (error) {
-                showToast("Unable to clear server state.", "error", false);
+                showToast(i18n[currentLang].clearFail, "error", false);
             }
         });
 
@@ -596,12 +702,16 @@
             }
             try {
                 await navigator.clipboard.writeText(lastAnswer);
-                showToast("Copied to clipboard.", "success", false);
+                showToast(i18n[currentLang].copySuccess, "success", false);
             } catch (error) {
-                showToast("Copy failed. Please try again.", "error", false);
+                showToast(i18n[currentLang].copyFail, "error", false);
             }
         });
 
+        langEsBtn.addEventListener("click", () => applyLanguage("es"));
+        langEnBtn.addEventListener("click", () => applyLanguage("en"));
+
+        applyLanguage("es");
         updateEmptyState();
     </script>
 </body>
