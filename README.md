@@ -40,6 +40,6 @@ A lightweight in-memory store tracks daily usage and resets each day.
 Active - portfolio demo ready.
 
 ## Demo
-Demo GIF placeholder: `assets/demo.gif`.
+Live demo: https://chatgpt-clone-rp4j.onrender.com
 This public demo is rate-limited to control costs (5 requests/day per IP, 50/day total, 15s cooldown).
 To run unlimited, clone the repo and set `OPENAI_API_KEY` locally.
