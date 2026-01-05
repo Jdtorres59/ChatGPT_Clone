@@ -43,3 +43,4 @@ Active - portfolio demo ready.
 Live demo: https://chatgpt-clone-rp4j.onrender.com
 This public demo is rate-limited to control costs (5 requests/day per IP, 50/day total, 15s cooldown).
 To run unlimited, clone the repo and set `OPENAI_API_KEY` locally.
+Repo: https://github.com/Jdtorres59/ChatGPT_Clone.git
